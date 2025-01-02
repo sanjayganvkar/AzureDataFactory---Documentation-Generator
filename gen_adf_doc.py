@@ -171,7 +171,7 @@ def print_datasets_html(data):
     </style>
 </head>
 <body>
-    <h2>MDM Hub ADF Artifacts</h2>
+    <h2>ADF Artifacts</h2>
     <h3>Table of Contents</h3>
     <hr>
     <table class='toc-table'>
