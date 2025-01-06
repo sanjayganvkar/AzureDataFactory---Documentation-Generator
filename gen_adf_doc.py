@@ -147,10 +147,10 @@ def print_datasets_html(data):
 <head>
     <title>Data Factory Datasets, Linked Services, and Pipelines</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
+        body { font-family: Arial, sans-serif; margin: 3px; }
         h2, h3, h4 { color: #333; }
         hr { margin-block-start: 0.83em; margin-block-end: 0.83em; margin-inline-start: 0px; margin-inline-end: 0px; }
-        table { width: 95%; border-collapse: collapse; margin-bottom: 20px; }
+        table { width: 95%; border-collapse: collapse; margin-bottom: 3px; }
         th, td { padding: 8px; text-align: left; border: 1px solid #ccc; }
         th { background-color: #f9f9f9; }
         ul { list-style-type: none; padding: 0; }
@@ -163,15 +163,15 @@ def print_datasets_html(data):
         .activity-table th, .activity-table td { padding: 8px; border: 1px solid #ddd; }
         pre { margin: 0; font-family: monospace; }
         details summary { display: flex; align-items: center; cursor: pointer; }
-        .marker { width: 0; height: 0; border-top: 5px solid transparent; border-bottom: 5px solid transparent; border-left: 10px solid #007bff; margin-right: 10px; }
+        .marker { width: 0; height: 0; border-top: 3px solid transparent; border-bottom: 3px solid transparent; border-left: 3px solid #007bff; margin-right: 3px; }
         .dataset-name { color: #d1a419; }
         .linked-service-name { color: #33c3ff; }
         .pipeline-name { color: #2c0b4f; }
-        .toc-table td { vertical-align: top; padding-right: 20px; }
+        .toc-table td { vertical-align: top; padding-right: 3px; }
     </style>
 </head>
 <body>
-    <h2>ADF Artifacts</h2>
+    <h2>MDM Hub ADF Artifacts</h2>
     <h3>Table of Contents</h3>
     <hr>
     <table class='toc-table'>
@@ -258,6 +258,33 @@ def print_datasets_html(data):
 
     html += "</table>"
 
+    html += "<h3>Data Flows</h3><table>"
+
+    for resource in resources:
+        if resource["type"] == "Microsoft.DataFactory/factories/dataflows":
+            name = extract_dataset_name(resource["name"])
+            properties = resource["properties"]
+            type_ = properties["type"]
+
+            type_properties_html = convert_to_nested_table_html(properties.get("typeProperties", {}))
+
+            html += f"""
+        <tr id='{name}'>
+            <th colspan='2'><details><summary class='linked-service-name'>{name}</summary>
+            <table>
+            <tr>
+                <td>Type</td>
+                <td>{type_}</td>
+            </tr>
+            <tr>
+                <td>Type Properties</td>
+                <td>{type_properties_html}</td>
+            </table></details></th>
+        </tr>
+"""
+
+    html += "</table>"
+
     html += "<h3>Pipelines</h3><table>"
 
     for resource in resources:
@@ -320,7 +347,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate HTML documentation for ADF artifacts from an ARM template.")
     parser.add_argument("--arm_template_file_path", required=True, help="Path to the JSON file containing the ARM template.")
     parser.add_argument("--html_file_path", required=True, help="Path to the output HTML file.")
-
     args = parser.parse_args()
 
     main(args.arm_template_file_path, args.html_file_path)
