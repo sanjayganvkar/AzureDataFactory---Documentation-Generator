@@ -22,14 +22,32 @@ from collections import defaultdict, deque
 
 def convert_to_nested_table_html(obj, suppress_type_expression=False):
     html = "<table class='nested-table'>"
-    for key, value in obj.items():
-        if suppress_type_expression and key == "type" and value == "Expression":
-            continue
-        if isinstance(value, dict):
-            nested_table = convert_to_nested_table_html(value, suppress_type_expression)
-            html += f"<tr><td>{key}</td><td>{nested_table}</td></tr>"
-        else:
-            html += f"<tr><td>{key}</td><td>{value}</td></tr>"
+    
+    if isinstance(obj, dict):
+        for key, value in obj.items():
+            html += "<tr>"
+            html += f"<td>{key}</td>"
+            if isinstance(value, (dict, list)):
+                html += f"<td>{convert_to_nested_table_html(value, suppress_type_expression)}</td>"
+            else:
+                html += f"<td>{value}</td>"
+            html += "</tr>"
+    elif isinstance(obj, list):
+        for item in obj:
+            if isinstance(item, dict):
+                for key, value in item.items():
+                    html += "<tr>"
+                    html += f"<td>{key}</td>"
+                    if isinstance(value, (dict, list)):
+                        html += f"<td>{convert_to_nested_table_html(value, suppress_type_expression)}</td>"
+                    else:
+                        html += f"<td>{value}</td>"
+                    html += "</tr>"
+            else:
+                html += "<tr>"
+                html += f"<td>{item}</td>"
+                html += "</tr>"
+    
     html += "</table>"
     return html
 
@@ -254,7 +272,47 @@ def print_datasets_html(data):
                 <td>{type_properties_html}</td>
             </table></details></th>
         </tr>
-"""
+        """
+
+    html += "</table>"
+
+
+    html += "<h3>Triggers</h3><table>"
+
+    for resource in resources:
+        if resource["type"] == "Microsoft.DataFactory/factories/triggers":
+            name = extract_dataset_name(resource["name"])
+            properties = resource["properties"]
+            type_ = properties["type"]
+
+            type_properties_html = convert_to_nested_table_html(properties.get("typeProperties", {}))
+            # Debug statement to print the pipelines property
+            pipelines = properties.get("pipelines", {})
+            print(f"Debug: Pipelines for resource {name}: {pipelines}")
+            pipelines_html = convert_to_nested_table_html(properties.get("pipelines", {}))
+            
+
+            html += f"""
+        <tr id='{name}'>
+            <th colspan='2'><details><summary class='linked-service-name'>{name}</summary>
+            <table>
+            <tr>
+                <td>Type</td>
+                <td>{type_}</td>
+            </tr>
+            <tr>
+                <td>Type Properties</td>
+                <td>{type_properties_html}</td>
+            </table>
+            
+              
+            
+            </details></th>
+            
+            
+            
+        </tr>
+        """
 
     html += "</table>"
 
