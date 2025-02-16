@@ -9,7 +9,6 @@ License: MIT License
 
 Dependencies:
     - pandas (pip install pandas)
-    - Any other dependencies
 
 Usage:
     python gen_adf_doc.py --arm_template_file_path "./ARMTemplateForFactory.json" --html_file_path "adf_doc.html"
@@ -86,6 +85,7 @@ def generate_activity_html(activities):
     html_content = ""
     for activity in sorted_activities:
         activity_name = activity.get("name")
+        activity_description = activity.get("description")    
         activity_type = activity.get("type")
         depends_on = activity.get("dependsOn")
         user_properties = activity.get("userProperties")
@@ -93,7 +93,7 @@ def generate_activity_html(activities):
 
         html_content += f"""
         <details>
-            <summary><span class='marker'></span>Activity: {activity_name}</summary>
+            <summary><table><tr><td style="width: 250px;">{activity_name} </td><td>{activity_description}</td></tr></table></summary>
             <table class='activity-table'>
                 <tr>
                     <th>Attribute</th>
@@ -146,6 +146,12 @@ def generate_activity_html(activities):
     return html_content
 
 def print_datasets_html(data):
+
+
+    parameters = data.get("parameters", {})
+    factory_name_param = parameters.get("factoryName", {})
+    factory_name = factory_name_param.get("defaultValue", "Unknown")
+   
     resources = data.get("resources", [])
     # Filter out triggers from the resources
     ## filtered_resources = [resource for resource in resources if resource.get("type") != "Microsoft.DataFactory/factories/triggers"]
@@ -182,14 +188,16 @@ def print_datasets_html(data):
         .toc-table td { vertical-align: top; padding-right: 1px; }
     </style>
 </head>
-<body>
-    <h2>MDM Hub ADF Artifacts</h2>
+
+"""
+    html += f"""
+    <body>
+    <h2>DataFactory  [ {factory_name} ] Artifacts</h2>
     <h3>Table of Contents</h3>
     <hr>
     <table class='toc-table'>
         <tr>
-"""
-
+    """
     grouped_resources = {}
     for resource in resources:
         resource_type = resource["type"].split('/')[-1]
@@ -383,18 +391,19 @@ def print_datasets_html(data):
                 </tr>
                 
                 <tr>
-                    <td>Parameter Name</td>
-                    <td>Type</td>
-                </tr>
+                    <td>Parameters</td><td>
+
             """
+            
             for parameter_name, parameter_value in parameters.items():
                 parameter_type = parameter_value.get("type")
                 html += f"""
-                    <tr>
-                        <td>{parameter_name}</td>
-                        <td>{parameter_type}</td>
-                    </tr>
+                     &lt;&nbsp;{parameter_name} : {parameter_type} &nbsp;&gt;
+                 
                 """
+                
+            html += "</td></tr>"
+                            
 
             html += f"""
         <tr>
@@ -411,6 +420,8 @@ def main(arm_template_file_path, html_file_path):
     # Read the JSON file
     with open(arm_template_file_path, 'r') as f:
         data = json.load(f)
+
+
 
     html_content = print_datasets_html(data)
 
