@@ -218,7 +218,40 @@ def print_datasets_html(data):
         column_count += 1
 
     html += "</tr></table><hr><h2>Artifact Details</h2><hr>"
+    html += "<h3>Integration Runtimes</h3><table>"
 
+    for resource in resources:
+        if resource["type"] == "Microsoft.DataFactory/factories/integrationRuntimes":
+            name = extract_dataset_name(resource["name"])
+            properties = resource["properties"]
+            intg_description = properties.get("description")  
+  
+
+            parameters_html = convert_to_nested_table_html(properties.get("parameters", {}))
+            type_properties_html = convert_to_nested_table_html(properties.get("typeProperties", {}), suppress_type_expression=True)
+
+            html += f"""
+        <tr id='{name}'>
+            <th colspan='2'><details><summary class='dataset-name'>{name}</summary>
+            <p>
+            <table>
+            <tr>
+               {intg_description}
+            </tr>
+ 
+            <tr>
+                <td>Parameters</td>
+                <td>{parameters_html}</td>
+            </tr>
+            <tr>
+                <td>Type Properties</td>
+                <td>{type_properties_html}</td>
+            </table></details></th>
+        </tr>
+        """
+
+    html += "</table>"
+    
     html += "<h3>Datasets</h3><table>"
 
     for resource in resources:
@@ -226,6 +259,7 @@ def print_datasets_html(data):
             name = extract_dataset_name(resource["name"])
             properties = resource["properties"]
             linked_service_name = properties["linkedServiceName"]["referenceName"]
+  
 
             parameters_html = convert_to_nested_table_html(properties.get("parameters", {}))
             type_properties_html = convert_to_nested_table_html(properties.get("typeProperties", {}), suppress_type_expression=True)
@@ -238,6 +272,7 @@ def print_datasets_html(data):
                 <td>Linked Service Name</td>
                 <td>{linked_service_name}</td>
             </tr>
+ 
             <tr>
                 <td>Parameters</td>
                 <td>{parameters_html}</td>
@@ -258,13 +293,18 @@ def print_datasets_html(data):
             name = extract_dataset_name(resource["name"])
             properties = resource["properties"]
             type_ = properties["type"]
-
+            linked_service_description = properties.get("description")  
             type_properties_html = convert_to_nested_table_html(properties.get("typeProperties", {}))
 
             html += f"""
         <tr id='{name}'>
-            <th colspan='2'><details><summary class='linked-service-name'>{name}</summary>
+            <th colspan='2'><details><summary class='linked-service-name'>{name} </summary>
+            <p>
             <table>
+            <tr>
+               {linked_service_description}
+            </tr>
+            
             <tr>
                 <td>Type</td>
                 <td>{type_}</td>
@@ -285,9 +325,6 @@ def print_datasets_html(data):
            
             name = extract_dataset_name(resource["name"])
             properties = resource["properties"]
-            
-
-            
             runtime_state = properties.get('runtimeState', "Unknown")  # Extract Runtime State
             recurrence = properties.get('typeProperties', {}).get('recurrence', {})
             frequency = recurrence.get('frequency', "Unknown")  # Extract Frequency
