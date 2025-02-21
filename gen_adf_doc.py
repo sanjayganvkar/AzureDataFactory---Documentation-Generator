@@ -145,6 +145,48 @@ def generate_activity_html(activities):
 
     return html_content
 
+def generate_resource_html(resource_type, resources, specific_properties):
+    html = f"<h3>{resource_type}</h3><table>"
+    
+    for resource in resources:
+        if resource["type"] == specific_properties["type_identifier"]:
+            name = extract_dataset_name(resource["name"])
+            properties = resource["properties"]
+            description = properties.get("description", "")  
+            details_html = ""
+
+            # Build the details HTML based on specific properties
+            for key, label in specific_properties["display_properties"].items():
+                if key in properties:
+                    value = properties[key]
+                    if isinstance(value, dict):
+                        value_html = convert_to_nested_table_html(value)
+                    else:
+                        value_html = str(value)
+                    details_html += f"<tr><td>{label}</td><td>{value_html}</td></tr>"
+            html += f"""
+            <tr id='{name}'>
+                <th colspan='2'><details>  
+                            <summary class='pipeline-name' style="display: flex; justify-content: space-between; align-items: center;">
+                            <strong>{name}</strong>
+                            <span class="float-right"><a href="#top" class="button-link">Go to Top</a></span>
+                        </summary></th>
+            </tr>
+            <tr>
+                <td colspan='2'><p>{description}</p>
+                <table>
+                {details_html}
+                </table></td>
+            </tr>
+            """
+    
+    html += "</table>"
+    
+    # Add an up arrow button
+
+    
+    return html
+    
 def print_datasets_html(data):
 
 
@@ -163,38 +205,62 @@ def print_datasets_html(data):
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Data Factory Datasets, Linked Services, and Pipelines</title>
+    <title>ADF Artifacts</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 1px; }
+        body { font-family: Arial, sans-serif; margin-left: 10px; margin-right: 10px;}
         h2, h3, h4 { color: #333; }
         hr { margin-block-start: 0.83em; margin-block-end: 0.83em; margin-inline-start: 0px; margin-inline-end: 0px; }
-        table { width: 95%; border-collapse: collapse; margin-bottom: 1px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 1px; }
         th, td { padding: 8px; text-align: left; border: 1px solid #ccc; }
         th { background-color: #f9f9f9; }
         ul { list-style-type: none; padding: 0; }
         ul li { margin: 2px 0; }
-        ul li a { text-decoration: none; color: #1a73e8; }
+        ul li a { text-decoration: none; zcolor: #1a73e8; }
         ul li a:hover { text-decoration: underline; }
-        .nested-table { width: 100%; border-collapse: collapse; }
-        .nested-table th, .nested-table td { padding: 1px; border: 1px solid #ddd; }
+            .nested-table {
+            width: 100%;
+            border-collapse: separate; /* Use separate borders for the card effect */
+            border-spacing: 0; /* Remove spacing between borders */
+            background-color: #FFFFFF; /* White background for the nested table */
+            border-radius: 8px; /* Rounded corners */
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Softer emboss effect */
+            overflow: hidden; /* Ensures border radius is applied */
+        }
         .activity-table { width: 100%; border-collapse: collapse; }
         .activity-table th, .activity-table td { padding: 1px; border: 1px solid #ddd; }
         pre { margin: 0; font-family: monospace; }
         details summary { display: flex; align-items: center; cursor: pointer; }
         .marker { width: 0; height: 0; border-top: 3px solid transparent; border-bottom: 3px solid transparent; border-left: 3px solid #007bff; margin-right: 3px; }
-        .dataset-name { color: #d1a419; }
-        .linked-service-name { color: #33c3ff; }
-        .pipeline-name { color: #2c0b4f; }
-        .toc-table td { vertical-align: top; padding-right: 1px; }
+        .dataset-name { zzcolor: #d1a419; }
+        .linked-service-name { zzcolor: #33c3ff; }
+        .pipeline-name {  color: #1b4f72; }
+        .toc-table td { vertical-align: top; padding-right: 1px;background-color: #f9faf5ff; }
+        .float-right {
+            float: right;
+        }
+
+        .button-link {
+            text-decoration: none;
+            font-size: 16px;
+            color: #000;
+            padding: 5px 10px;
+            border: 1px solid #000;
+            border-radius: 5px;
+            background-color: #f0f0f0;
+        }
     </style>
 </head>
 
 """
     html += f"""
-    <body>
-    <h2>DataFactory  [ {factory_name} ] Artifacts</h2>
-    <h3>Table of Contents</h3>
-    <hr>
+<body>
+<h2 style="background-color: #335bff; color: #f8f9f9; margin: 0 0 10px 0; padding: 20px; border-top-left-radius: 15px; border-top-right-radius: 15px; display: flex; align-items: center;">
+    <img src="https://YourLogoOrImageFile"   style="height: 25px; margin-right: 10px;">
+    <span style="flex: 1; text-align: center;">Azure DataFactory Artifacts : {factory_name} </span>
+</h2>
+<h3>Table of Contents</h3>
+    <div id="top"></div>
+ 
     <table class='toc-table'>
         <tr>
     """
@@ -211,114 +277,66 @@ def print_datasets_html(data):
         if column_count % 3 == 0:
             html += "</tr><tr>"
         html += f"<td><h4>{capitalized_field}</h4><ul>"
-        for resource in group_resources:
-            name = extract_dataset_name(resource["name"])
+        # Extract names from group_resources
+        names = [extract_dataset_name(resource["name"]) for resource in group_resources]
+
+        # Sort names in alphabetical order
+        names.sort()
+
+        # Generate HTML list
+        for name in names:
             html += f"<li><a href='#{name}'>{name}</a></li>"
         html += "</ul></td>"
         column_count += 1
+        
+    # Define the specific properties for each resource type
+    integration_runtime_properties = {
+        "type_identifier": "Microsoft.DataFactory/factories/integrationRuntimes",
+        "display_properties": {
+            "parameters": "Parameters",
+            "typeProperties": "Type Properties"
+        }
+    }
+
+    dataset_properties = {
+        "type_identifier": "Microsoft.DataFactory/factories/datasets",
+        "display_properties": {
+            "linkedServiceName": "Linked Service Name",
+            "parameters": "Parameters",
+            "typeProperties": "Type Properties"
+        }
+    }
+
+    linked_service_properties = {
+        "type_identifier": "Microsoft.DataFactory/factories/linkedServices",
+        "display_properties": {
+            "type": "Type",
+            "typeProperties": "Type Properties"
+        }
+    }
+
+    dataflow_properties = {
+        "type_identifier": "Microsoft.DataFactory/factories/dataflows",
+        "display_properties": {
+            "type": "Type",
+            "typeProperties": "Type Properties"
+        }
+    }
 
     html += "</tr></table><hr><h2>Artifact Details</h2><hr>"
-    html += "<h3>Integration Runtimes</h3><table>"
+    # Generate HTML for each resource type
 
-    for resource in resources:
-        if resource["type"] == "Microsoft.DataFactory/factories/integrationRuntimes":
-            name = extract_dataset_name(resource["name"])
-            properties = resource["properties"]
-            intg_description = properties.get("description")  
-  
-
-            parameters_html = convert_to_nested_table_html(properties.get("parameters", {}))
-            type_properties_html = convert_to_nested_table_html(properties.get("typeProperties", {}), suppress_type_expression=True)
-
-            html += f"""
-        <tr id='{name}'>
-            <th colspan='2'><details><summary class='dataset-name'>{name}</summary>
-            <p>
-            <table>
-            <tr>
-               {intg_description}
-            </tr>
- 
-            <tr>
-                <td>Parameters</td>
-                <td>{parameters_html}</td>
-            </tr>
-            <tr>
-                <td>Type Properties</td>
-                <td>{type_properties_html}</td>
-            </table></details></th>
-        </tr>
-        """
-
-    html += "</table>"
-    
-    html += "<h3>Datasets</h3><table>"
-
-    for resource in resources:
-        if resource["type"] == "Microsoft.DataFactory/factories/datasets":
-            name = extract_dataset_name(resource["name"])
-            properties = resource["properties"]
-            linked_service_name = properties["linkedServiceName"]["referenceName"]
-  
-
-            parameters_html = convert_to_nested_table_html(properties.get("parameters", {}))
-            type_properties_html = convert_to_nested_table_html(properties.get("typeProperties", {}), suppress_type_expression=True)
-
-            html += f"""
-        <tr id='{name}'>
-            <th colspan='2'><details><summary class='dataset-name'>{name}</summary>
-            <table>
-            <tr>
-                <td>Linked Service Name</td>
-                <td>{linked_service_name}</td>
-            </tr>
- 
-            <tr>
-                <td>Parameters</td>
-                <td>{parameters_html}</td>
-            </tr>
-            <tr>
-                <td>Type Properties</td>
-                <td>{type_properties_html}</td>
-            </table></details></th>
-        </tr>
-        """
+    html += generate_resource_html("Integration Runtimes", resources, integration_runtime_properties)
+    html += generate_resource_html("Datasets", resources, dataset_properties)
+    html += generate_resource_html("Linked Services", resources, linked_service_properties)
+    html += generate_resource_html("Data Flows", resources, dataflow_properties)
 
     html += "</table>"
 
-    html += "<h3>Linked Services</h3><table>"
-
-    for resource in resources:
-        if resource["type"] == "Microsoft.DataFactory/factories/linkedServices":
-            name = extract_dataset_name(resource["name"])
-            properties = resource["properties"]
-            type_ = properties["type"]
-            linked_service_description = properties.get("description")  
-            type_properties_html = convert_to_nested_table_html(properties.get("typeProperties", {}))
-
-            html += f"""
-        <tr id='{name}'>
-            <th colspan='2'><details><summary class='linked-service-name'>{name} </summary>
-            <p>
-            <table>
-            <tr>
-               {linked_service_description}
-            </tr>
-            
-            <tr>
-                <td>Type</td>
-                <td>{type_}</td>
-            </tr>
-            <tr>
-                <td>Type Properties</td>
-                <td>{type_properties_html}</td>
-            </table></details></th>
-        </tr>
-        """
-
-    html += "</table>"
-
-    html += "<h3>Triggers</h3><table>"
+    html += '<p><h3 style="display: inline;">Triggers</h3>' + \
+    '<span class="float-right">' + \
+    '<a href="#top" class="button-link">Go to Top</a></span>' + \
+    '<table>'
     trigger_details = []
     for resource in resources:
         if resource.get('type') == "Microsoft.DataFactory/factories/triggers":
@@ -379,33 +397,7 @@ def print_datasets_html(data):
     </table>
             """
 
-    html += "<h3>Data Flows</h3><table>"
 
-    for resource in resources:
-        if resource["type"] == "Microsoft.DataFactory/factories/dataflows":
-            name = extract_dataset_name(resource["name"])
-            properties = resource["properties"]
-            type_ = properties["type"]
-
-            type_properties_html = convert_to_nested_table_html(properties.get("typeProperties", {}))
-
-            html += f"""
-            <tr id='{name}'>
-                <th colspan='2'><details><summary class='linked-service-name'>{name}</summary>
-                <table>
-                    <tr>
-                        <td>Type</td>
-                        <td>{type_}</td>
-                    </tr>
-                    <tr>
-                        <td>Type Properties</td>
-                        <td>{type_properties_html}</td>
-                    </tr>
-                </table></details></th>
-            </tr>
-            """
-
-    html += "</table>"
 
     html += "<h3>Pipelines</h3><table>"
 
@@ -419,10 +411,16 @@ def print_datasets_html(data):
             activities_html = generate_activity_html(properties.get("activities", []))
 
             html += f"""
-                <tr id='{name}'>
-                    <th colspan='2' class='pipeline-name'>{name}</th>
-                  
-                </tr>
+                 <tr id='{name}'>
+                <th colspan='2'>
+                    <details>
+                        <summary class='pipeline-name' style="display: flex; justify-content: space-between; align-items: center;">
+                            <strong>{name}</strong>
+                            <span class="float-right"><a href="#top" class="button-link">Go to Top</a></span>
+                        </summary>
+                    </details>
+                </th>
+            </tr>
                 <tr>
                   <td colspan='2' class='xpipeline-name'>{pipeline_description}</td>
                 </tr>
