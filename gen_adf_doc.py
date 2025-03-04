@@ -406,6 +406,7 @@ def print_datasets_html(data):
             name = extract_dataset_name(resource["name"])
             properties = resource["properties"]
             parameters = properties.get("parameters", {})
+            variables = properties.get("variables", {})
             pipeline_description = properties.get("description")
 
             activities_html = generate_activity_html(properties.get("activities", []))
@@ -438,7 +439,20 @@ def print_datasets_html(data):
                 """
                 
             html += "</td></tr>"
-                            
+            html += f"""
+                <tr>
+                    <td>Variables</td><td>
+
+            """                        
+            for variable_name, variable_value in variables.items():
+                variable_type = variable_value.get("type")
+                html += f"""
+                     &lt;&nbsp;{variable_name} : {variable_type} &nbsp;&gt;
+                 
+                """
+                
+            html += "</td></tr>"                         
+                                                      
 
             html += f"""
         <tr>
