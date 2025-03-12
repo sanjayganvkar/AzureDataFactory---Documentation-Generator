@@ -311,7 +311,8 @@ def print_datasets_html(data):
         "type_identifier": "Microsoft.DataFactory/factories/linkedServices",
         "display_properties": {
             "type": "Type",
-            "typeProperties": "Type Properties"
+            "typeProperties": "Type Properties",
+            "connectVia": "connect Via"
         }
     }
 
