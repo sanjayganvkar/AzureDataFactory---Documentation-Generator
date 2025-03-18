@@ -347,6 +347,7 @@ def print_datasets_html(data):
             runtime_state = properties.get('runtimeState', "Unknown")  # Extract Runtime State
             recurrence = properties.get('typeProperties', {}).get('recurrence', {})
             frequency = recurrence.get('frequency', "Unknown")  # Extract Frequency
+            annotations = properties.get('annotations', "Unknown")  # Extract Annotations
             interval = recurrence.get('interval', "Unknown")  # Extract Interval
             start_time = recurrence.get('startTime', "Unknown")  # Extract Start Time
             time_zone = recurrence.get('timeZone', "Unknown")  # Extract Time Zone
@@ -358,9 +359,10 @@ def print_datasets_html(data):
                 'runtime_state': runtime_state,
                 'frequency': frequency,
                 'interval': interval,
-                'start_time': start_time,
+                'start_time': start_time[11:],
                 'time_zone': time_zone,
-                'pipeline_reference': pipeline_reference
+                'pipeline_reference': pipeline_reference,
+                'annotations': annotations
             })
 
             # Sort the trigger details by Trigger Name
@@ -377,6 +379,7 @@ def print_datasets_html(data):
             <th>Start Time</th>
             <th>Time Zone</th>
             <th>Pipeline Reference</th>
+            <th>Annotations</th>
         </tr>
     """
 
@@ -391,6 +394,7 @@ def print_datasets_html(data):
             <td>{trigger['start_time']}</td>
             <td>{trigger['time_zone']}</td>
             <td>{trigger['pipeline_reference']}</td>
+            <td>{trigger['annotations']}</td>
         </tr>
         """
 
