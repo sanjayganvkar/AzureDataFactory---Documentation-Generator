@@ -5,12 +5,13 @@ To Use
 1. Clone the Repository or download the gen_adf_doc.py
 
 2. Set Up Python Environment
-You’ll need Python 3.7+ and this package:
+You’ll need Python 3.7+ and the pandas package:
 
  pip install pandas
 
 3. Export ARM Template from ADF
-In ADF Studio:
+   
+In ADF Studio
 
 Go to Manage > ARM template > Export ARM Template
 
