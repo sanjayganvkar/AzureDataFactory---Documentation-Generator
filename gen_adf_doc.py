@@ -472,7 +472,7 @@ def print_datasets_html(data):
 
 def main(arm_template_file_path, html_file_path):
     # Read the JSON file
-    with open(arm_template_file_path, 'r') as f:
+    with open(arm_template_file_path, 'r', encoding="utf-8") as f:
         data = json.load(f)
 
 
@@ -492,3 +492,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     main(args.arm_template_file_path, args.html_file_path)
+
